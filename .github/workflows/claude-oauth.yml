@@ -12,23 +12,27 @@ jobs:
 
     permissions:
       id-token: write
-      issues:   write
+      issues: write
       pull-requests: write
       contents: read
 
-steps:
-  - uses: actions/checkout@v4
+    steps:
+      - uses: actions/checkout@v4
 
-  - uses: oven-sh/setup-bun@v2
-    with:
-      bun-version: 1.2.15          # 固定してキャッシュ安定
-  - name: Install prod deps
-    run: bun install --production  # ここまでで 4〜6 s
+      # Bun ランタイムを入れる（4–6 s）
+      - uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: 1.2.15
 
-  - uses: hiromima/claude-code-action@main
-    with:
-      use_oauth: 'true'
-      claude_access_token:  ${{ secrets.CLAUDE_ACCESS_TOKEN }}
-      claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
-      claude_expires_at:    ${{ secrets.CLAUDE_EXPIRES_AT }}
+      # devDeps を落として最小インストール
+      - name: Install prod deps
+        run: bun install --production
+
+      # Claude Code Action（TypeScriptを Bun で実行）
+      - uses: hiromima/claude-code-action@main
+        with:
+          use_oauth: 'true'
+          claude_access_token:  ${{ secrets.CLAUDE_ACCESS_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at:    ${{ secrets.CLAUDE_EXPIRES_AT }}
 
