@@ -1,0 +1,16 @@
+name: Claude Code OAuth Test
+on:
+  issue_comment: { types: [created] }
+
+jobs:
+  claude:
+    if: contains(github.event.comment.body, '@claude')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hiromima/claude-code-action@main   # ← base ではなく code の方
+        with:
+          use_oauth: 'true'
+          claude_access_token:  ${{ secrets.CLAUDE_ACCESS_TOKEN }}
+          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+          claude_expires_at:    ${{ secrets.CLAUDE_EXPIRES_AT }}
