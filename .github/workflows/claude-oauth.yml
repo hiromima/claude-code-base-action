@@ -16,14 +16,19 @@ jobs:
       pull-requests: write
       contents: read
 
-    steps:
-      - uses: actions/checkout@v4
+steps:
+  - uses: actions/checkout@v4
 
-      # ※ 1️⃣ Pre-built dist を使うので Bun などは一切不要
-      - uses: hiromima/claude-code-action@v0.1.0   # ← 自分のタグ付きリリース
-        with:
-          use_oauth: 'true'
-          claude_access_token:  ${{ secrets.CLAUDE_ACCESS_TOKEN }}
-          claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
-          claude_expires_at:    ${{ secrets.CLAUDE_EXPIRES_AT }}
+  - uses: oven-sh/setup-bun@v2
+    with:
+      bun-version: 1.2.15          # 固定してキャッシュ安定
+  - name: Install prod deps
+    run: bun install --production  # ここまでで 4〜6 s
+
+  - uses: hiromima/claude-code-action@main
+    with:
+      use_oauth: 'true'
+      claude_access_token:  ${{ secrets.CLAUDE_ACCESS_TOKEN }}
+      claude_refresh_token: ${{ secrets.CLAUDE_REFRESH_TOKEN }}
+      claude_expires_at:    ${{ secrets.CLAUDE_EXPIRES_AT }}
 
