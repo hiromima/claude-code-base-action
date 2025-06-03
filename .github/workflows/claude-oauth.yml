@@ -1,50 +1,26 @@
-name: Claude Code OAuth Fast
+name: Claude Code OAuth (simple-fast)
+
 on:
   issue_comment:
     types: [created]
 
-concurrency:
-  group: claude-${{ github.event.issue.number }}
-  cancel-in-progress: true
-
 jobs:
   claude:
-    if: ${{ contains(github.event.comment.body, '@claude') }}
+    # 「@claude」が入っている時だけ実行
+    if: contains(github.event.comment.body, '@claude')
     runs-on: ubuntu-latest
-    env: { BUN_VERSION: 1.2.15 }
 
     permissions:
       id-token: write
-      contents: read
-      issues: write
+      issues:   write
       pull-requests: write
+      contents: read
 
     steps:
       - uses: actions/checkout@v4
 
-      # Bun 本体キャッシュ
-      - uses: actions/cache@v4
-        with:
-          path: ~/.bun/install/cache
-          key: ${{ runner.os }}-bun-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lockb') }}
-          restore-keys: ${{ runner.os }}-bun-
-
-      # Bun セットアップ（cache 入力は不要）
-      - uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: ${{ env.BUN_VERSION }}
-
-      # node_modules キャッシュ
-      - uses: actions/cache@v4
-        with:
-          path: node_modules
-          key: ${{ runner.os }}-modules-${{ hashFiles('package.json', 'bun.lockb') }}
-          restore-keys: ${{ runner.os }}-modules-
-
-      - name: Install prod deps
-        run: bun install --production
-
-      - uses: hiromima/claude-code-action@main
+      # ※ 1️⃣ Pre-built dist を使うので Bun などは一切不要
+      - uses: hiromima/claude-code-action@v0.1.0   # ← 自分のタグ付きリリース
         with:
           use_oauth: 'true'
           claude_access_token:  ${{ secrets.CLAUDE_ACCESS_TOKEN }}
