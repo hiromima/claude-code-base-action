@@ -1,60 +1,50 @@
 name: Claude Code OAuth Fast
-
 on:
-  # コメントが付いたときだけトリガー
   issue_comment:
     types: [created]
 
-# 同じ Issue/PR で連打されたら古いジョブをキャンセル
 concurrency:
   group: claude-${{ github.event.issue.number }}
   cancel-in-progress: true
 
 jobs:
   claude:
-    # @claude が入っていないコメントならジョブごとスキップ
-    if: contains(github.event.comment.body, '@claude')
+    if: ${{ contains(github.event.comment.body, '@claude') }}
     runs-on: ubuntu-latest
-
-    # Bun の固定バージョンを変数で共通管理
-    env:
-      BUN_VERSION: 1.2.15
+    env: { BUN_VERSION: 1.2.15 }
 
     permissions:
-      id-token: write      # OIDC 取得
+      id-token: write
       contents: read
-      issues:   write      # Claude が Issue へ返信
-      pull-requests: write # PR で使う場合の保険
+      issues: write
+      pull-requests: write
 
     steps:
       - uses: actions/checkout@v4
 
-      # ---------- ① Bun の依存キャッシュ ----------
+      # Bun 本体キャッシュ
       - uses: actions/cache@v4
         with:
           path: ~/.bun/install/cache
           key: ${{ runner.os }}-bun-${{ env.BUN_VERSION }}-${{ hashFiles('bun.lockb') }}
           restore-keys: ${{ runner.os }}-bun-
 
-      # ---------- ② Bun セットアップ＆自動キャッシュ ----------
+      # Bun セットアップ（cache 入力は不要）
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: ${{ env.BUN_VERSION }}
-          cache: true
 
-      # ---------- ③ node_modules も保険でキャッシュ ----------
+      # node_modules キャッシュ
       - uses: actions/cache@v4
         with:
           path: node_modules
           key: ${{ runner.os }}-modules-${{ hashFiles('package.json', 'bun.lockb') }}
           restore-keys: ${{ runner.os }}-modules-
 
-      # ---------- ④ devDeps を落として最小インストール ----------
-      - name: Install production dependencies
+      - name: Install prod deps
         run: bun install --production
 
-      # ---------- ⑤ Claude Code Action（OAuth） ----------
-      - uses: hiromima/claude-code-action@main  # pre-built タグを作ったら @v0.1.0 等に変える
+      - uses: hiromima/claude-code-action@main
         with:
           use_oauth: 'true'
           claude_access_token:  ${{ secrets.CLAUDE_ACCESS_TOKEN }}
